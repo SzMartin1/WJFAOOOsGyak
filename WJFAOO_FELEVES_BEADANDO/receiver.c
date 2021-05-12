@@ -14,28 +14,28 @@ int main() {
   int numberOfTasks;
   int a, b, c;
 
-  key_t key= ftok(PathName, ProjectId); /* key to identify the queue */
+  key_t key= ftok(PathName, ProjectId); //kulcs generálás
   if (key < 0)
     report_and_exit("key not gotten...");
 
-  int qid = msgget(key, 0666 | IPC_CREAT); /* access if created already */
+  int qid = msgget(key, 0666 | IPC_CREAT); //qid generálás
   if (qid < 0)
     report_and_exit("no access to queue...");
 
   queuedMessage msg;
 
   //type 1 es message tartalmazza a feladatok számát
-  if (msgrcv(qid, &msg, sizeof(msg), 1, MSG_NOERROR | IPC_NOWAIT) < 0)
+  if (msgrcv(qid, &msg, sizeof(msg), 1, MSG_NOERROR | IPC_NOWAIT) < 0)//Fogadom az 1-es üzenetet, ami a feladatok számát tartalmazza
     puts("msgrcv trouble...");
   numberOfTasks = msg.payload[0] - '0';
-  printf("Number of tasks = %d \n", numberOfTasks);
+  printf("Number of tasks = %d \n", numberOfTasks);// kiírom hány feladat lesz
   long types[numberOfTasks];
 
   for (int iterator = 2; iterator < numberOfTasks + 2; iterator++){
     types[iterator - 2] = iterator; 
-  }
+  }//ez a tömb tartalmazza a fogadandó feladatok típusszámát
 
-  FILE* file = fopen (OutputFile, "w");
+  FILE* file = fopen (OutputFile, "w");// megnyitom az output fájlt, végigmegyek a types tömbön és fogadom az üzeneteket
   for (int messageIterator = 0; messageIterator < numberOfTasks; messageIterator++){
     if (msgrcv(qid, &msg, sizeof(msg), types[messageIterator], MSG_NOERROR | IPC_NOWAIT) < 0)
       puts("msgrcv trouble...");
@@ -44,13 +44,13 @@ int main() {
     b = msg.payload[1] - '0';
     c = msg.payload[2] - '0';
     printf("a=%d\tb=%d\tc=%d\n",a ,b ,c);
-    quadraticToFile(file, a, b, c);
+    quadraticToFile(file, a, b, c);// meghívom ezt a függvényt, amely megoldja a másodfokú egyenleteket.
   }
-  fclose (file); 
+  fclose (file);// a fájlt bezárom 
 
   //befejezés
   if (msgctl(qid, IPC_RMID, NULL) < 0)
-    report_and_exit("trouble removing queue...");
+    report_and_exit("trouble removing queue...");//törli a queue-t
 
   return 0;
 }
@@ -61,15 +61,15 @@ void report_and_exit(const char* msg) {
   perror(msg);
   exit(-1);
 
-}
+}// hibát dob megadott szöveggel
 
 void quadraticToFile(FILE* file, float a, float b, float c){
 
   float discriminant = b * b - 4 * a * c;
  
-  if(discriminant < 0){
+  if(discriminant < 0){// ha a diszkrimináns kisebb mint 0, akkor komplex számokat fogunk kapni
 
-    printf("Roots are complec numbers.\n");
+    printf("Roots are complex numbers.\n");
     float realPart = -b / (2 * a);
     float imagPart = sqrt(-discriminant) / (2 * a);
     printf("Roots of quadratic equation are: ");
